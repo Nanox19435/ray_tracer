@@ -1,4 +1,5 @@
 use std::rc::Rc;
+use rand::Rng;
 
 mod structs;
 
@@ -30,6 +31,7 @@ fn main() {
     const ASPECT_RATIO: f64 = 16.0/9.0;
     let image_width: u32 = 400;
     let image_height: u32 = (image_width as f64 / ASPECT_RATIO) as u32;
+    let samples_per_pixel: u8 = 100;
 
     //World
     let mut world = HittableList::new();
@@ -37,14 +39,7 @@ fn main() {
     world.add(Rc::new(Sphere::new(Vector3::new(0.0,-100.5,-1.0), 100.0)));
 
     //Camera
-    let viewport_height: f64 = 2.0;
-    let viewport_width: f64 = ASPECT_RATIO * viewport_height;
-    let focal_length: f64 = 1.0;
-
-    let origin = Vector3::new(0.0, 0.0, 0.0);
-    let horizontal = Vector3::new(viewport_width, 0.0, 0.0);
-    let vertical = Vector3::new(0.0, viewport_height, 0.0);
-    let lower_left_corner = origin - horizontal/2.0 - vertical/2.0 - Vector3::new(0.0, 0.0, focal_length);
+    let camera = camera::Camera::default();
 
     //Render
     println!("P3\n{} {}\n255", image_width, image_height);
@@ -52,14 +47,18 @@ fn main() {
     for j in (0..image_height).rev() {
         eprint!("\x1B[2J");
         eprintln!("Scanlines remaining: {}", j);
-        for i in 0..image_width {
-            let u: f64 = i as f64 / (image_width - 1) as f64;
-            let v: f64 = j as f64 / (image_height - 1) as f64;
+        for _ in 0..image_width {
+            let mut pixel_color: Color = Color::new(0.0, 0.0, 0.0);
+            for i in 0..samples_per_pixel {
+                let mut rng = rand::thread_rng();
+                let u: f64 = i as f64 + rng.gen_range(0.0..1.0)/ (image_width - 1) as f64;
+                let v: f64 = j as f64 + rng.gen_range(0.0..1.0)/ (image_height - 1) as f64;
 
-            let r: Ray = Ray::new(origin, lower_left_corner + u*horizontal + v*vertical - origin);
-            let pixel_color = ray_color(&r, &world);
+                let ray = camera.get_ray(u, v);
+                pixel_color = pixel_color + ray_color(&ray, &world);
+            }
 
-            structs::vec3::write_color(pixel_color);
+            structs::vec3::write_color(pixel_color, samples_per_pixel);
 
 
         }
