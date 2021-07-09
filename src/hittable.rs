@@ -1,7 +1,7 @@
 use super::structs::{vec3::Vector3, ray::Ray};
 
 pub struct HitRecord {
-    p: Vector3,
+    pub p: Vector3,
     pub normal: Vector3,
     t: f64,
     front_face: bool

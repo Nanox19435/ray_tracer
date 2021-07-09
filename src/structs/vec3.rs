@@ -1,4 +1,4 @@
-
+use rand::Rng;
 
 #[derive(Clone, Copy, Debug)]
 pub struct Vector3 {
@@ -8,6 +8,15 @@ pub struct Vector3 {
 }
 
 impl Vector3 {
+    pub fn rand(min: f64, max:f64) -> Vector3 {
+        let mut rng = rand::thread_rng();
+        Vector3 {
+                 x: rng.gen_range(min..=max),
+                 y: rng.gen_range(min..=max),
+                 z: rng.gen_range(min..=max)
+                }
+    }
+
     pub fn new(x:f64, y:f64, z:f64) -> Vector3{
         Vector3 {x,y,z}
     }
@@ -96,13 +105,36 @@ impl std::ops::Neg for Vector3 {
     }
 }
 
+//This is different than in the book because I want to avoid innecesary loops.
+pub fn random_in_unit_sphere() -> Vector3 {
+    let p = Vector3::rand(-1.0, 1.0);
+    if p.length_squared() <= 1.0 {
+        p
+    } else {
+        p.normalized()
+    }
+}
+
+pub fn random_in_hemisphere(normal: Vector3) -> Vector3 {
+    let in_unit_sphere = random_in_unit_sphere();
+    if in_unit_sphere.dot(normal) > 0.0 {
+        in_unit_sphere
+    } else {
+        -in_unit_sphere
+    }
+}
+
+
 pub fn write_color(pixel_color: Vector3, samples_per_pixel: u8) {
     let mut r = pixel_color.x;
     let mut g = pixel_color.y;
     let mut b = pixel_color.z;
 
+    //Adjust for correct gamma value.
     let scale = 1.0/samples_per_pixel as f64;
-    r *= scale; g *= scale; b *= scale;
+    r = (r*scale).sqrt();
+    g = (g*scale).sqrt();
+    b = (b*scale).sqrt();
 
     println!("{} {} {}", (256.0 * r.clamp(0.0, 0.999)) as i32, (256.0 * g.clamp(0.0, 0.999)) as i32,
                          (256.0 * b.clamp(0.0, 0.999)) as i32);

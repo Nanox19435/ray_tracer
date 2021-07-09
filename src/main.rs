@@ -14,9 +14,11 @@ use hittable::{hittable_list::HittableList, sphere::Sphere};
 
 mod camera;
 
-fn ray_color(ray: &Ray, world: &dyn hittable::Hittable) -> Color {
-    if let Some(hit) = world.hit(ray, 0.0, f64::INFINITY) {
-        0.5*(hit.normal + Color::new(1.0, 1.0, 1.0))
+fn ray_color(ray: &Ray, world: &dyn hittable::Hittable, depth: u8) -> Color {
+    if depth <= 0 {return Color::new(0.0,0.0,0.0);}
+    if let Some(hit) = world.hit(ray, 0.001, f64::INFINITY) {
+        let target = hit.p + structs::vec3::random_in_hemisphere(hit.normal);
+        0.5 * ray_color(&Ray::new(hit.p, target - hit.p), world, depth - 1)
     } else {
         let unit_direction = ray.direction.normalized();
         let t = 0.5*(unit_direction.y + 1.0);
@@ -31,7 +33,8 @@ fn main() {
     const ASPECT_RATIO: f64 = 16.0/9.0;
     let image_width: u32 = 400;
     let image_height: u32 = (image_width as f64 / ASPECT_RATIO) as u32;
-    let samples_per_pixel: u8 = 75;
+    let samples_per_pixel: u8 = 100;
+    let max_depth: u8 = 50;
 
     //World
     let mut world = HittableList::new();
@@ -51,11 +54,11 @@ fn main() {
             let mut pixel_color: Color = Color::new(0.0, 0.0, 0.0);
             for _ in 0..samples_per_pixel {
                 let mut rng = rand::thread_rng();
-                let u: f64 = (i as f64 + rng.gen_range(0.0..0.9))/ (image_width - 1) as f64;
-                let v: f64 = (j as f64 + rng.gen_range(0.0..0.9))/ (image_height - 1) as f64;
+                let u: f64 = (i as f64 + rng.gen_range(0.0..1.0))/ (image_width - 1) as f64;
+                let v: f64 = (j as f64 + rng.gen_range(0.0..1.0))/ (image_height - 1) as f64;
 
                 let ray = camera.get_ray(u, v);
-                pixel_color = pixel_color + ray_color(&ray, &world);
+                pixel_color = pixel_color + ray_color(&ray, &world, max_depth);
             }
 
             structs::vec3::write_color(pixel_color, samples_per_pixel);
