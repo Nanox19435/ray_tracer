@@ -1,3 +1,4 @@
+use std::rc::Rc;
 use super::{
     super::structs::{vec3::Vector3, ray::Ray},
     HitRecord};
@@ -5,12 +6,13 @@ use super::{
 
 pub struct Sphere {
     center: Vector3,
-    radius: f64
+    radius: f64,
+    material: Rc<dyn super::materials::Material>
 }
 
 impl Sphere {
-    pub fn new(center: Vector3, radius: f64) -> Sphere {
-        Sphere {center, radius}
+    pub fn new(center: Vector3, radius: f64, material: Rc<dyn super::materials::Material>) -> Sphere {
+        Sphere {center, radius, material}
     }
 }
 
@@ -37,7 +39,7 @@ impl super::Hittable for Sphere {
         let p = ray.at(t);
         let normal = (p - self.center) / self.radius;
 
-        let mut hit = super::HitRecord {t, normal, p, front_face:false};
+        let mut hit = super::HitRecord {t, normal, material: self.material.clone(), p, front_face: false};
         hit.set_face_normal(ray, normal);
 
         Some(hit)

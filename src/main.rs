@@ -10,15 +10,20 @@ use structs::vec3::Vector3 as Color;
 use structs::ray::Ray;
 
 mod hittable;
-use hittable::{hittable_list::HittableList, sphere::Sphere};
+use hittable::{hittable_list::HittableList, sphere::Sphere, materials::{Lambertian, Metal}};
 
 mod camera;
 
 fn ray_color(ray: &Ray, world: &dyn hittable::Hittable, depth: u8) -> Color {
     if depth <= 0 {return Color::new(0.0,0.0,0.0);}
+
     if let Some(hit) = world.hit(ray, 0.001, f64::INFINITY) {
-        let target = hit.p + structs::vec3::random_in_hemisphere(hit.normal);
-        0.5 * ray_color(&Ray::new(hit.p, target - hit.p), world, depth - 1)
+        //Things like this are why I LOVE Rust
+        if let Some((scattered, attenuation)) = hit.material.scatter(ray, &hit) {
+            attenuation * ray_color(&scattered, world, depth - 1)
+        } else {
+            Color::new(0.0, 0.0, 0.0)
+        }
     } else {
         let unit_direction = ray.direction.normalized();
         let t = 0.5*(unit_direction.y + 1.0);
@@ -38,8 +43,16 @@ fn main() {
 
     //World
     let mut world = HittableList::new();
-    world.add(Rc::new(Sphere::new(Vector3::new(0.0,0.0,-1.0), 0.5)));
-    world.add(Rc::new(Sphere::new(Vector3::new(0.0,-100.5,-1.0), 100.0)));
+
+    let material_ground = Rc::new(Lambertian {albedo: Color::new(0.8, 0.8, 0.0)});
+    let material_center = Rc::new(Lambertian {albedo: Color::new(0.7, 0.3, 0.3)});
+    let material_left =  Rc::new(Metal {albedo: Color::new(0.8, 0.8, 0.8)});
+    let material_right = Rc::new(Metal {albedo: Color::new(0.8, 0.6, 0.2)});
+
+    world.add(Rc::new(Sphere::new(Vector3::new(0.0,0.0,-1.0), 0.5, material_center)));
+    world.add(Rc::new(Sphere::new(Vector3::new(0.0,-100.5,-1.0), 100.0, material_ground)));
+    world.add(Rc::new(Sphere::new(Vector3::new(-1.0, 0.0, -1.0), 0.5, material_left)));
+    world.add(Rc::new(Sphere::new(Vector3::new(1.0, 0.0, -1.0), 0.5, material_right)));
 
     //Camera
     let camera = camera::Camera::default();
