@@ -39,7 +39,7 @@ impl super::Hittable for Sphere {
         let p = ray.at(t);
         let normal = (p - self.center) / self.radius;
 
-        let mut hit = super::HitRecord {t, normal, material: self.material.clone(), p, front_face: false};
+        let mut hit = HitRecord {t, normal, material: self.material.clone(), p, front_face: false};
         hit.set_face_normal(ray, normal);
 
         Some(hit)

@@ -121,14 +121,14 @@ pub fn random_in_unit_sphere() -> Vector3 {
     }
 }
 
-pub fn random_in_hemisphere(normal: Vector3) -> Vector3 {
-    let in_unit_sphere = random_in_unit_sphere();
-    if in_unit_sphere.dot(normal) > 0.0 {
-        in_unit_sphere
-    } else {
-        -in_unit_sphere
-    }
-}
+// pub fn random_in_hemisphere(normal: Vector3) -> Vector3 {
+//     let in_unit_sphere = random_in_unit_sphere();
+//     if in_unit_sphere.dot(normal) > 0.0 {
+//         in_unit_sphere
+//     } else {
+//         -in_unit_sphere
+//     }
+// }
 
 
 pub fn write_color(pixel_color: Vector3, samples_per_pixel: u8) {
